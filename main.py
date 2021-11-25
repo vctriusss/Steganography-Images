@@ -2,6 +2,7 @@ from PIL import Image
 import numpy as np
 from math import log10
 
+
 # данная функция разбивает сообщение в 2 СС на блоки длиной lsb
 # Каждый блок (двоичное число) переводим в десятичное
 def refactor_message(text, lsb):
@@ -41,10 +42,10 @@ def main():
                  '1) Встроить сообщение\n'
                  '2) Извлечь сообщение\n'
                  '3) Рассчитать пиковое соотношение сигнал-шум для 2 изображений\n')
-    if task == 3:
+    if task == '3':
         check_quality()
+        return 0
     name0 = input('Введите имя изначального изображения в формате "name.format"\n')
-    global name
     img = Image.open(name0)
     name = name0[:name0.index('.')]
     if img.format != 'BMP':  # превращаем изображение в .bmp
@@ -52,12 +53,12 @@ def main():
         img.close()
         img = Image.open(f'{name}.bmp')
     if task == '1':
-        encrypt(img)
-    else:
+        encrypt(img, name)
+    elif task == '2':
         decrypt(img)
 
 
-def encrypt(img):
+def encrypt(img, name):
     width, height = img.size
     msg_type = input('\nСообщение - это:\n'
                      '1) Текст\n'
@@ -65,7 +66,7 @@ def encrypt(img):
     print('Введите информацию для встраивания в файл input.txt')
     lsb = int(input('Введите количество LSB, которые можно изменять (от 1 до 7):\n'))
     with open('input.txt', 'r', encoding='utf-8') as f:
-        msg_normal = f.read()[:400000]
+        msg_normal = f.read()
     msg = msg_normal if msg_type == '2' else text_to_bin(msg_normal)
     bin_len = bin(len(msg))[2:]
     msg = '0' * (24 - len(bin_len)) + bin_len + msg  # к сообщению добавляем его длину
@@ -94,7 +95,7 @@ def encrypt(img):
     img.close()
     print('Встраивание завершено успешно!\nПолученное изображение находится в той же папке '
           + f'под именем {name}1.bmp')
-    print(f'Емкость встраивания: {len(msg) / (width * height)} бит/пиксель')
+    print(f'Емкость встраивания: {round(size / (width * height), 3)} бит/пиксель')
     print(f'Заполненность контейнера: {round(size * 100 / (3 * lsb * width * height), 4)}%')
 
 
@@ -126,6 +127,7 @@ def decrypt(img):
     img.close()
 
 
+# функция для проверки качества встраивания сообщение (определение шума)
 def check_quality():
     name1 = input('Введите имя первого изображения в формате "name.bmp"\n')
     name2 = input('Введите имя первого изображения в формате "name.bmp"\n')
@@ -143,8 +145,9 @@ def check_quality():
         summ += (y1 - y2) ** 2
     mse = summ / (width * height)
     psnr = 10 * log10((255 ** 2) / mse)
-    print('PSNR =', round(psnr), 'dB')
+    print('\nPSNR =', round(psnr), 'dB')
     img1.close()
     img2.close()
-main()
 
+
+main()
